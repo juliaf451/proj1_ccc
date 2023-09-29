@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends
 from enum import Enum
 from pydantic import BaseModel
 from src.api import auth
+import sqlalchemy
+from src import database as db
+
+
 
 router = APIRouter(
     prefix="/bottler",
@@ -26,6 +30,13 @@ def get_bottle_plan():
     """
     Go from barrel to bottle.
     """
+    
+    with db.engine.begin() as connection:
+        if connection.execute(sqlalchemy.text("SELECT num_red_ml FROM global_inventory")) >= 500:
+            sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_potions = num_red_potions+5")
+            result = connection.execute(sql_to_execute)
+            sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_ml = num_red_ml-500")
+            result = connection.execute(sql_to_execute)
 
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.
@@ -39,3 +50,5 @@ def get_bottle_plan():
                 "quantity": 5,
             }
         ]
+
+
