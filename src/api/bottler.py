@@ -32,11 +32,19 @@ def get_bottle_plan():
     """
     
     with db.engine.begin() as connection:
-        if connection.execute(sqlalchemy.text("SELECT num_red_ml FROM global_inventory")) >= 500:
+        
+        inventory = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_red_potions FROM global_inventory")).first()
+        num_ml = inventory.num_red_ml
+
+
+        if  num_ml >= 500:
             sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_potions = num_red_potions+5")
             result = connection.execute(sql_to_execute)
+
             sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_ml = num_red_ml-500")
             result = connection.execute(sql_to_execute)
+            
+    
 
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.

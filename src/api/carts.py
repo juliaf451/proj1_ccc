@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
-from src.api import auth
 import sqlalchemy
 from src import database as db
+from src.api import auth
+
 
 
 
@@ -16,18 +17,23 @@ router = APIRouter(
 class NewCart(BaseModel):
     customer: str
 
+cart_id = 0
+carts = {}
 
 @router.post("/")
 def create_cart(new_cart: NewCart):
     """ """
-    return {"cart_id": 1}
+    global cart_id
+    cart_id += 1
+    carts[cart_id] = 0
+    return {"cart_id": cart_id}
 
 
 @router.get("/{cart_id}")
 def get_cart(cart_id: int):
     """ """
-
-    return {}
+    cart_info = carts.get(cart_id, {})
+    return cart_info
 
 
 class CartItem(BaseModel):
@@ -37,7 +43,7 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
-
+    carts[cart_id] = cart_item.quantity
     return "OK"
 
 
@@ -47,14 +53,17 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
+    quantity = carts[cart_id]
+    cost = quantity*50
     
     with db.engine.begin() as connection:
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+50")
-        result = connection.execute(sql_to_execute)
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_potions = num_red_potions-1")
-        result = connection.execute(sql_to_execute)
+        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+:money")
+        connection.execute(sql_to_execute, parameters={'money': cost})
+        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_potions = num_red_potions-:num")
+        connection.execute(sql_to_execute, parameters={'num': quantity})
 
-    return {"total_potions_bought": 1, "total_gold_paid": 50}
+
+    return {"total_potions_bought": quantity, "total_gold_paid": cost}
 
 
 
