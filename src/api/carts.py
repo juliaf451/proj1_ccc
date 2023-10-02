@@ -23,7 +23,6 @@ carts = {}
 @router.post("/")
 def create_cart(new_cart: NewCart):
     """ """
-    global cart_id
     cart_id += 1
     carts[cart_id] = 0
     return {"cart_id": cart_id}
@@ -45,7 +44,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
     carts[cart_id] = cart_item.quantity
     return "OK"
-
+    
 
 class CartCheckout(BaseModel):
     payment: str
