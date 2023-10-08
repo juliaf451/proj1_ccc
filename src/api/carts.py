@@ -24,7 +24,7 @@ carts = {}
 def create_cart(new_cart: NewCart):
     """ """
     cart_id += 1
-    carts[cart_id] = 0
+    carts[cart_id] = []
     return {"cart_id": cart_id}
 
 
@@ -42,7 +42,7 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
-    carts[cart_id] = cart_item.quantity
+    carts[cart_id].append({item_sku: cart_item.quantity})
     return "OK"
     
 
@@ -52,17 +52,31 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
-    quantity = carts[cart_id]
-    cost = quantity*50
+
+    quantity = list(carts[cart_id].values())
+    potions = list(carts[cart_id].keys())
+
     
     with db.engine.begin() as connection:
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+:money")
-        connection.execute(sql_to_execute, parameters={'money': cost})
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_potions = num_red_potions-:num")
-        connection.execute(sql_to_execute, parameters={'num': quantity})
+        total = 0
+        for i in range(0,len(quantity)):
+            
+            cost = quantity[i] * 50
+            total = total+cost
+            if potions[i] == [100,0,0,0]:
+                sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_potions = num_red_potions-:num")
+                connection.execute(sql_to_execute, parameters={'num': quantity[i]})
+            elif potions[i] == [0,100,0,0]:
+                sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_green_potions = num_green_potions-:num")
+                connection.execute(sql_to_execute, parameters={'num': quantity[i]})
+            elif potions[i] == [0,0,100,0]:
+                sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_blue_potions = num_blue_potions-:num")
+                connection.execute(sql_to_execute, parameters={'num': quantity[i]})
 
+            sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+:money")
+            connection.execute(sql_to_execute, parameters={'money': cost})
 
-    return {"total_potions_bought": quantity, "total_gold_paid": cost}
+    return {"total_potions_bought": quantity, "total_gold_paid": total}
 
 
 
