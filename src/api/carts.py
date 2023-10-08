@@ -23,6 +23,7 @@ carts = {}
 @router.post("/")
 def create_cart(new_cart: NewCart):
     """ """
+    global cart_id
     cart_id += 1
     carts[cart_id] = []
     return {"cart_id": cart_id}
@@ -56,7 +57,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     quantity = list(carts[cart_id].values())
     potions = list(carts[cart_id].keys())
 
-    
+    # how do we translate the item sku to the correct potion (if its a string)
     with db.engine.begin() as connection:
         total = 0
         for i in range(0,len(quantity)):
