@@ -21,15 +21,18 @@ class PotionInventory(BaseModel):
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     # Update database
     print(potions_delivered)
+    quantity_red = 0
+    quantity_blue = 0
+    quantity_green = 0
 
     for item in potions_delivered:
-        if item.potion_type == [100, 0, 0, 0]:
+        if item.potion_type == [1, 0, 0, 0]:
             quantity_red = item.quantity
 
-        elif item.potion_type == [0, 100, 0, 0]:
+        elif item.potion_type == [0, 1, 0, 0]:
             quantity_green = item.quantity
 
-        elif item.potion_type == [0, 0, 100, 0]:
+        elif item.potion_type == [0, 0, 1, 0]:
             quantity_blue = item.quantity
     
     with db.engine.begin() as connection:
@@ -63,7 +66,7 @@ def get_bottle_plan():
     
     with db.engine.begin() as connection:
         
-        inventory = connection.execute(sqlalchemy.text("SELECT *, num_red_potions FROM global_inventory")).first()
+        inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory")).first()
         num_red_ml = inventory.num_red_ml
         num_blue_ml = inventory.num_blue_ml
         num_green_ml = inventory.num_green_ml
@@ -72,6 +75,22 @@ def get_bottle_plan():
         quantity_blue = int(num_blue_ml/100)
         quantity_green = int(num_green_ml/100)
             
+        bottle = []
+        if quantity_red > 0:
+            bottle.append({
+                "potion_type": [100, 0, 0, 0],
+                "quantity": quantity_red,
+            })
+        if quantity_green > 0:
+            bottle.append({
+                "potion_type": [0, 100, 0, 0],
+                "quantity": quantity_green,
+            })
+        if quantity_blue > 0:
+            bottle.append({
+                "potion_type": [0, 0, 100, 0],
+                "quantity": quantity_blue,
+            })
 
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.
@@ -79,19 +98,7 @@ def get_bottle_plan():
 
     # Initial logic: bottle all barrels into red potions.
 
-    return [
-            {
-                "potion_type": [100, 0, 0, 0],
-                "quantity": quantity_red,
-            },
-            {
-                "potion_type": [0, 100, 0, 0],
-                "quantity": quantity_green,
-            },
-            {
-                "potion_type": [0, 0, 100, 0],
-                "quantity": quantity_blue,
-            }
-        ]
+    return bottle
+        
 
 

@@ -66,14 +66,15 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             cost = quantity[i] * 50
             total = total+cost 
             count = count+ quantity[i]
-            if potions[i] == [100,0,0,0]:
+            
+            if potions[i] == "RED_POTION_0":
                 sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_potions = num_red_potions-:num")
                 connection.execute(sql_to_execute, parameters={'num': quantity[i]})
 
-            elif potions[i] == [0,100,0,0]:
+            elif potions[i] == "GREEN_POTION_0":
                 sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_green_potions = num_green_potions-:num")
                 connection.execute(sql_to_execute, parameters={'num': quantity[i]})
-            elif potions[i] == [0,0,100,0]:
+            elif potions[i] == "BLUE_POTION_0":
                 sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_blue_potions = num_blue_potions-:num")
                 connection.execute(sql_to_execute, parameters={'num': quantity[i]})
 
