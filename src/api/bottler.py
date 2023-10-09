@@ -43,7 +43,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
         sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_green_potions = num_green_potions+:potions")
         connection.execute(sql_to_execute, parameters={'potions': quantity_green})
 
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_ml = num_red_ml-:ml")
+        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_green_ml = num_green_ml-:ml")
         connection.execute(sql_to_execute, parameters={'ml': quantity_green * 100})
 
         sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_blue_potions = num_blue_potions+:potions")
@@ -63,7 +63,7 @@ def get_bottle_plan():
     
     with db.engine.begin() as connection:
         
-        inventory = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_red_potions FROM global_inventory")).first()
+        inventory = connection.execute(sqlalchemy.text("SELECT *, num_red_potions FROM global_inventory")).first()
         num_red_ml = inventory.num_red_ml
         num_blue_ml = inventory.num_blue_ml
         num_green_ml = inventory.num_green_ml

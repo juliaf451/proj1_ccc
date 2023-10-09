@@ -60,13 +60,16 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     # how do we translate the item sku to the correct potion (if its a string)
     with db.engine.begin() as connection:
         total = 0
+        count = 0
         for i in range(0,len(quantity)):
             
             cost = quantity[i] * 50
-            total = total+cost
+            total = total+cost 
+            count = count+ quantity[i]
             if potions[i] == [100,0,0,0]:
                 sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_potions = num_red_potions-:num")
                 connection.execute(sql_to_execute, parameters={'num': quantity[i]})
+
             elif potions[i] == [0,100,0,0]:
                 sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_green_potions = num_green_potions-:num")
                 connection.execute(sql_to_execute, parameters={'num': quantity[i]})
@@ -77,7 +80,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+:money")
             connection.execute(sql_to_execute, parameters={'money': cost})
 
-    return {"total_potions_bought": quantity, "total_gold_paid": total}
+    return {"total_potions_bought": count, "total_gold_paid": total}
 
 
 
