@@ -29,7 +29,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 
         for barrel in barrels_delivered:
             potion = barrel.potion_type
-            quantity = barrel.quantity
+            quantity = 1
             cost = barrel.price
 
             if potion == [1,0,0,0]:
@@ -70,18 +70,15 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             cost = barrel.price
             if barrel.potion_type == [1,0,0,0] and gold >= cost and num_red_potions < 8:
                 purchase.append({ "sku": barrel.sku,
-                    "quantity": barrel.quantity})
+                    "quantity": 1})
                 gold = gold - cost
             elif barrel.potion_type == [0,0,1,0] and gold >= cost and num_blue_potions < 8:
                 purchase.append({ "sku": barrel.sku,
-                    "quantity": barrel.quantity})
+                    "quantity": 1})
                 gold = gold - cost
             elif barrel.potion_type == [0,1,0,0] and gold >= cost and num_green_potions < 8:
                 purchase.append({ "sku": barrel.sku,
-                    "quantity": barrel.quantity})
+                    "quantity": 1})
                 gold = gold - cost
 
     return purchase
-
-
-
