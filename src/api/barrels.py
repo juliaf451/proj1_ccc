@@ -26,7 +26,7 @@ class Barrel(BaseModel):
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
     print(barrels_delivered)
 
-    with db.engine.begin() as aconnection:
+    with db.engine.begin() as connection:
 
         for barrel in barrels_delivered:
             potion = barrel.potion_type
@@ -69,15 +69,16 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         # what other types of barrels are there? should we query by potion_type instead?
         for barrel in wholesale_catalog:
             cost = barrel.price
-            if barrel.potion_type == [1,0,0,0] and gold >= cost and num_red_potions < 8:
+            ml = barrel.ml_per_barrel
+            if barrel.potion_type == [1,0,0,0] and gold >= cost and num_red_potions < 8 and ml <= 500:
                 purchase.append({ "sku": barrel.sku,
                     "quantity": 1})
                 gold = gold - cost
-            elif barrel.potion_type == [0,0,1,0] and gold >= cost and num_blue_potions < 8:
+            elif barrel.potion_type == [0,0,1,0] and gold >= cost and num_blue_potions < 8 and ml <= 500:
                 purchase.append({ "sku": barrel.sku,
                     "quantity": 1})
                 gold = gold - cost
-            elif barrel.potion_type == [0,1,0,0] and gold >= cost and num_green_potions < 8:
+            elif barrel.potion_type == [0,1,0,0] and gold >= cost and num_green_potions < 8 and ml <= 500:
                 purchase.append({ "sku": barrel.sku,
                     "quantity": 1})
                 gold = gold - cost
