@@ -24,8 +24,9 @@ class Barrel(BaseModel):
 
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
+    print(barrels_delivered)
 
-    with db.engine.begin() as connection:
+    with db.engine.begin() as aconnection:
 
         for barrel in barrels_delivered:
             potion = barrel.potion_type
