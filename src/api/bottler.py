@@ -26,13 +26,13 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     quantity_green = 0
 
     for item in potions_delivered:
-        if item.potion_type == [1, 0, 0, 0]:
+        if item.potion_type == [100, 0, 0, 0]:
             quantity_red = item.quantity
 
-        elif item.potion_type == [0, 1, 0, 0]:
+        elif item.potion_type == [0, 100, 0, 0]:
             quantity_green = item.quantity
 
-        elif item.potion_type == [0, 0, 1, 0]:
+        elif item.potion_type == [0, 0, 100, 0]:
             quantity_blue = item.quantity
     
     with db.engine.begin() as connection:
