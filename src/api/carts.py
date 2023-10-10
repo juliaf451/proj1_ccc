@@ -58,7 +58,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     potions = []
     
     # Loop through each dictionary in carts
-    for cart in carts:
+    for cart in carts[cart_id]:
         quantity.extend(cart.values())
         potions.extend(cart.keys())
 
