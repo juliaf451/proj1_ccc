@@ -54,8 +54,13 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     print(carts[cart_id])
-    quantity = list(carts[cart_id].values())
-    potions = list(carts[cart_id].keys())
+    quantity = []
+    potions = []
+    
+    # Loop through each dictionary in carts
+    for cart in carts:
+        quantity.extend(cart.values())
+        potions.extend(cart.keys())
 
     # how do we translate the item sku to the correct potion (if its a string)
     with db.engine.begin() as connection:
