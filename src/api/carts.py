@@ -68,7 +68,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         count = 0
         for i in range(0,len(quantity)):
             
-            cost = quantity[i] * 10
+            cost = quantity[i] * 50
             total = total+cost 
             count = count+ quantity[i]
             
