@@ -73,11 +73,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
             # dont buy red right now i need other kinds
             
-            # if barrel.potion_type == [1,0,0,0] and gold >= cost and num_red_potions < 8 and ml <= 500:
-            #     purchase.append({ "sku": barrel.sku,
-            #         "quantity": 1})
-            #     gold = gold - cost
-            if barrel.potion_type == [0,0,1,0] and gold >= cost and num_blue_potions < 8 and ml < 500:
+            if barrel.potion_type == [1,0,0,0] and gold >= cost and num_red_potions < 8 and ml < 500:
+                purchase.append({ "sku": barrel.sku,
+                    "quantity": 1})
+                gold = gold - cost
+            elif barrel.potion_type == [0,0,1,0] and gold >= cost and num_blue_potions < 8 and ml < 500:
                 purchase.append({ "sku": barrel.sku,
                     "quantity": 1})
                 gold = gold - cost

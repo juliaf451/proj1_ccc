@@ -33,7 +33,7 @@ def get_catalog():
         statement.append({"sku": "BLUE_POTION_0",
                 "name": "blue potion",
                 "quantity": num_blue,
-                "price": 50,
+                "price": 10,
                 "potion_type": [0, 0, 100, 0]}) 
 
     if num_green != 0:
@@ -41,7 +41,7 @@ def get_catalog():
                 "sku": "GREEN_POTION_0",
                 "name": "green potion",
                 "quantity": num_green,
-                "price": 50,
+                "price": 10,
                 "potion_type": [0, 100, 0, 0]}) 
 
     return statement
