@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+import json
 
 
 
@@ -21,39 +22,49 @@ class PotionInventory(BaseModel):
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     # Update database
     print(potions_delivered)
-    quantity_red = 0
-    quantity_blue = 0
-    quantity_green = 0
+    red_ml = 0
+    blue_ml = 0
+    green_ml = 0
+    dark_ml = 0
+
+    potions = []
+    num = []
 
     for item in potions_delivered:
-        if item.potion_type == [100, 0, 0, 0]:
-            quantity_red = item.quantity
+        potion_type = item.potion_type
+        quantity = item.quantity
+        red_ml = red_ml + potion_type[0]*quantity
+        green_ml = green_ml + potion_type[1]*quantity
+        blue_ml = blue_ml + potion_type[2]*quantity
+        dark_ml = dark_ml + potion_type[3]*quantity
 
-        elif item.potion_type == [0, 100, 0, 0]:
-            quantity_green = item.quantity
-
-        elif item.potion_type == [0, 0, 100, 0]:
-            quantity_blue = item.quantity
+        potions.append(potion_type)
+        num.append(quantity)
     
+
     with db.engine.begin() as connection:
-        
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_potions = num_red_potions+:potions")
-        connection.execute(sql_to_execute, parameters={'potions': quantity_red})
 
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_ml = num_red_ml-:ml")
-        connection.execute(sql_to_execute, parameters={'ml': quantity_red * 100})
+        connection.execute(
+            sqlalchemy.text(
+                """
+                UPDATE global_inventory SET
+                num_red_ml = num_red_ml - :red_ml,
+                num_blue_ml = num_blue_ml - :blue_ml,
+                num_green_ml = num_green_ml - :green_ml,
+                num_dark_ml = num_dark_ml - :dark_ml
+                """),
+            [{'red_ml':red_ml,'green_ml':green_ml,'blue_ml':blue_ml,'dark_ml':dark_ml}])
 
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_green_potions = num_green_potions+:potions")
-        connection.execute(sql_to_execute, parameters={'potions': quantity_green})
-
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_green_ml = num_green_ml-:ml")
-        connection.execute(sql_to_execute, parameters={'ml': quantity_green * 100})
-
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_blue_potions = num_blue_potions+:potions")
-        connection.execute(sql_to_execute, parameters={'potions': quantity_blue})
-
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_blue_ml = num_blue_ml-:ml")
-        connection.execute(sql_to_execute, parameters={'ml': quantity_blue * 100})
+        for i in range(0,len(num)):
+            potions_jsonb = json.dumps(potions[i])
+            connection.execute(
+                sqlalchemy.text(
+                    """
+                    UPDATE catalog
+                    SET inventory = catalog.inventory + :num
+                    WHERE catalog.potion_type = :potions
+                    """),
+                [{'num':num[i],'potions':potions_jsonb}])
 
     return "OK"
 
@@ -63,42 +74,43 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
 def get_bottle_plan():
     
     # Determine how many potions to make
-    
+    # Pull all the types of potions and how many we have of each. 
+    # Order the list by which we have the least of, loop through bottling that way
+
     with db.engine.begin() as connection:
         
-        inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory")).first()
-        num_red_ml = inventory.num_red_ml
-        num_blue_ml = inventory.num_blue_ml
-        num_green_ml = inventory.num_green_ml
-        
-        quantity_red = int(num_red_ml/100)
-        quantity_blue = int(num_blue_ml/100)
-        quantity_green = int(num_green_ml/100)
-            
+        ml_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory")).first()
+        num_red_ml = ml_inventory.num_red_ml
+        num_blue_ml = ml_inventory.num_blue_ml
+        num_green_ml = ml_inventory.num_green_ml
+        num_dark_ml = ml_inventory.num_dark_ml
+
+        catalog = connection.execute(sqlalchemy.text("SELECT inventory,potion_type FROM catalog")).all()
+        catalog = sorted(catalog, key=lambda item: item[0])
+        print(catalog)
+
+    
         bottle = []
-        if quantity_red > 0:
-            bottle.append({
-                "potion_type": [100, 0, 0, 0],
-                "quantity": quantity_red,
-            })
-        if quantity_green > 0:
-            bottle.append({
-                "potion_type": [0, 100, 0, 0],
-                "quantity": quantity_green,
-            })
-        if quantity_blue > 0:
-            bottle.append({
-                "potion_type": [0, 0, 100, 0],
-                "quantity": quantity_blue,
-            })
-
-    # Each bottle has a quantity of what proportion of red, blue, and
-    # green potion to add.
-    # Expressed in integers from 1 to 100 that must sum up to 100.
-
-    # Initial logic: bottle all barrels into red potions.
-
-    return bottle
         
+        for item in catalog:
+            quantity = 0
+            potion_type = item[1]
+            if num_red_ml >= potion_type[0] and num_green_ml >= potion_type[1] and \
+                num_blue_ml >= potion_type[2] and num_dark_ml >= potion_type[3]:
 
+                quantity += 1
 
+                num_red_ml = num_red_ml-potion_type[0]
+                num_green_ml = num_green_ml-potion_type[1]
+                num_blue_ml = num_blue_ml-potion_type[2]
+                num_dark_ml = num_dark_ml-potion_type[3]
+
+                bottle.append({
+                    "potion_type": potion_type,
+                    "quantity": quantity,
+                })
+
+        print(bottle)
+
+        return bottle
+ 
