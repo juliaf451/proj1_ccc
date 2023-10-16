@@ -96,6 +96,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 WHERE cart_id = :cart_id"""),
                 [{'cart_id':cart_id}]).scalars().all()
 
+        item_cost = 0
         for item in purchase:
             catalog_id = item.catalog_id
             quantity = item.quantity
@@ -144,7 +145,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         #     connection.execute(sql_to_execute, parameters={'money': cost})
 
 
-    return {"total_potions_bought": potions, "total_gold_paid": gold}
+    return {"total_potions_bought": item_cost, "total_gold_paid": gold}
 
 
 
