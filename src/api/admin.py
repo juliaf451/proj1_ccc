@@ -29,6 +29,7 @@ def reset():
                 """))
         connection.execute(sqlalchemy.text("UPDATE catalog SET inventory=0"))
         connection.execute(sqlalchemy.text("TRUNCATE carts"))
+        connection.execute(sqlalchemy.text("TRUNCATE cart_items"))
 
 
     return "OK"

@@ -129,7 +129,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             item_cost = price * quantity
             gold += item_cost
 
-
+        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+:money")
+        connection.execute(sql_to_execute, parameters={'money': gold})
 
         # for i in range(0,len(quantity)):
             
