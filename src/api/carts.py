@@ -102,7 +102,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
             # Fetch the price of the catalog item
             price = connection.execute(
-                sqlacalchemy.text("""
+                sqlalchemy.text("""
                 SELECT price
                 FROM catalog
                 WHERE id = :catalog_id
