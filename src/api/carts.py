@@ -94,13 +94,14 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 """SELECT *
                 FROM carts
                 WHERE cart_id = :cart_id"""),
-                [{'cart_id':cart_id}]).scalars().all()
-
-        item_cost = 0
+                [{'cart_id':cart_id}]).all()
+        
+        
         gold = 0
         potions = 0
 
         for item in purchase:
+
             catalog_id = item.catalog_id
             quantity = item.quantity
             potions += quantity
@@ -111,8 +112,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 FROM catalog
                 WHERE id = :catalog_id
                 """),
-                {'catalog_id': catalog_id}
-            ).scalar()
+                {'catalog_id': catalog_id}).scalar()
 
             # Calculate the cost for this item and add it to the total cost
             item_cost = price * quantity
