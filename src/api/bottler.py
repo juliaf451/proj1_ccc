@@ -92,23 +92,24 @@ def get_bottle_plan():
     
         bottle = []
         
-        for item in catalog:
-            quantity = 0
-            potion_type = item[1]
-            if num_red_ml >= potion_type[0] and num_green_ml >= potion_type[1] and \
-                num_blue_ml >= potion_type[2] and num_dark_ml >= potion_type[3]:
+        while num_red_ml > 25 and num_blue_ml > 25 and num_green_ml > 25 and num_dark_ml > 25:
+            for item in catalog:
+                quantity = 0
+                potion_type = item[1]
+                if num_red_ml >= potion_type[0] and num_green_ml >= potion_type[1] and \
+                    num_blue_ml >= potion_type[2] and num_dark_ml >= potion_type[3]:
 
-                quantity += 1
+                    quantity += 1
 
-                num_red_ml = num_red_ml-potion_type[0]
-                num_green_ml = num_green_ml-potion_type[1]
-                num_blue_ml = num_blue_ml-potion_type[2]
-                num_dark_ml = num_dark_ml-potion_type[3]
+                    num_red_ml = num_red_ml-potion_type[0]
+                    num_green_ml = num_green_ml-potion_type[1]
+                    num_blue_ml = num_blue_ml-potion_type[2]
+                    num_dark_ml = num_dark_ml-potion_type[3]
 
-                bottle.append({
-                    "potion_type": potion_type,
-                    "quantity": quantity,
-                })
+                    bottle.append({
+                        "potion_type": potion_type,
+                        "quantity": quantity,
+                    })
 
         print(bottle)
 
