@@ -92,7 +92,7 @@ def get_bottle_plan():
     
         bottle = []
         
-        while num_red_ml > 25 and num_blue_ml > 25 and num_green_ml > 25 and num_dark_ml > 25:
+        while num_red_ml > 50 or num_blue_ml > 50 or num_green_ml > 50 or num_dark_ml > 100:
             for item in catalog:
                 quantity = 0
                 potion_type = item[1]
