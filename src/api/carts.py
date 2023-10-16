@@ -17,24 +17,35 @@ router = APIRouter(
 class NewCart(BaseModel):
     customer: str
 
-cart_id = 0
-carts = {}
 
 @router.post("/")
 def create_cart(new_cart: NewCart):
     """ """
-    global cart_id
+    with db.engine.begin() as connection:
+        cart_id = connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO carts (customer_name)
+                VALUES (:name)
+                RETURNING id
+                """),{'name':new_cart.customer}).scalar()
 
-    cart_id += 1
-    carts[cart_id] = []
+    print(cart_id)
     return {"cart_id": cart_id}
 
 
 @router.get("/{cart_id}")
 def get_cart(cart_id: int):
     """ """
-    cart_info = carts.get(cart_id, {})
-    return cart_info
+    # with db.engine.begin() as connection:
+    #     cart_info = connection.execute(
+    #         sqlalchemy.text(
+    #             """SELECT id,customer_name
+    #             FROM carts
+    #             WHERE id = :cart_id"""),
+    #             [{'cart_id':cart_id}]).all()
+    
+    return cart_id
 
 
 class CartItem(BaseModel):
@@ -50,7 +61,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
         connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO carts (cart_id, quantity, catalog_id) 
+                INSERT INTO cart_items (cart_id, quantity, catalog_id) 
                 SELECT :cart_id, :quantity, catalog.id 
                 FROM catalog WHERE catalog.sku = :item_sku  
                 """),
@@ -65,7 +76,7 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
-
+    
     # update statmenets here * use update/select combo
 
     # print(carts[cart_id])
@@ -84,7 +95,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     """
                     UPDATE catalog
                     SET inventory = catalog.inventory - carts.quantity
-                    FROM carts
+                    FROM cart_items
                     WHERE catalog.id = carts.catalog_id and carts.cart_id = :cart_id
                     """),
                 [{'cart_id':cart_id}])
@@ -92,7 +103,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         purchase = connection.execute(
             sqlalchemy.text(
                 """SELECT *
-                FROM carts
+                FROM cart_items
                 WHERE cart_id = :cart_id"""),
                 [{'cart_id':cart_id}]).all()
         
