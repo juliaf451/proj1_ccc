@@ -78,8 +78,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     #     potions.extend(cart.keys())
 
     with db.engine.begin() as connection:
-        total = 0
-        count = 0
 
         connection.execute(
                 sqlalchemy.text(
@@ -98,16 +96,24 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 WHERE cart_id = :cart_id"""),
                 [{'cart_id':cart_id}]).scalars().all()
 
-        prices = connection.execute(
-            sqlalchemy.text(
-                """SELECT price
+        for item in purchase:
+            catalog_id = item.catalog_id
+            quantity = item.quantity
+
+            # Fetch the price of the catalog item
+            price = connection.execute(
+                text("""
+                SELECT price
                 FROM catalog
-                WHERE id = :catalog_id"""),
-                [{'catalog_id':purchase.catalog_id}]).scalars().all()
-        
-        potions = sum(purchase.quantity)
-        gold = sum(result = [a * b for a, b in zip(prices, purchase.quantity)]
-)
+                WHERE id = :catalog_id
+                """),
+                {'catalog_id': catalog_id}
+            ).scalar()
+
+            # Calculate the cost for this item and add it to the total cost
+            item_cost = price * quantity
+            gold += item_cost
+
 
 
         # for i in range(0,len(quantity)):
