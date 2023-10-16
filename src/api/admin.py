@@ -25,7 +25,7 @@ def reset():
                 num_red_ml = 0,
                 num_blue_ml = 0,
                 num_green_ml = 0,
-                gold = 100,
+                gold = 100
                 """))
         connection.execute(sqlalchemy.text("UPDATE catalog SET inventory=0"))
 

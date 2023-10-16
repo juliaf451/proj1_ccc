@@ -87,7 +87,7 @@ def get_bottle_plan():
 
         catalog = connection.execute(sqlalchemy.text("SELECT inventory,potion_type FROM catalog")).all()
         catalog = sorted(catalog, key=lambda item: item[0])
-        print(catalog)
+
 
     
         bottle = []
