@@ -28,6 +28,7 @@ def reset():
                 gold = 100
                 """))
         connection.execute(sqlalchemy.text("UPDATE catalog SET inventory=0"))
+        connection.execute(sqlalchemy.text("TRUNCATE carts"))
 
 
     return "OK"
