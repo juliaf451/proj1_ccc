@@ -44,4 +44,3 @@ def get_shop_info():
         "shop_name": "Cal Poly Concoctions",
         "shop_owner": "Julia",
     }
-

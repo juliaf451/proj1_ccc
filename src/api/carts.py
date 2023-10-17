@@ -96,7 +96,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     UPDATE catalog
                     SET inventory = catalog.inventory - carts.quantity
                     FROM cart_items
-                    WHERE catalog.id = carts.catalog_id and carts.cart_id = :cart_id
+                    WHERE catalog.id = cart_items.catalog_id and cart_items.cart_id = :cart_id
                     """),
                 [{'cart_id':cart_id}])
         
