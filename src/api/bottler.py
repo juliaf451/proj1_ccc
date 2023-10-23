@@ -74,13 +74,12 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
         columns_str = ', '.join(column_names)
         placeholders = ', '.join([f':{col}' for col in column_names])
         
-        query = sqlalchemy.text(f"""
+        connection.execute(
+            sqlalchemy.text(f"""
                 INSERT INTO potion_ledger ({columns_str}) 
                 VALUES ({placeholders})
-                """)
+                """), ({col: value for col, value in zip(column_names, values)}))
     
-        parameters = {col: value for col, value in zip(column_names, values)}
-        connection.execute(query, **parameters)
         
         # Update the barrels ledger
         connection.execute(

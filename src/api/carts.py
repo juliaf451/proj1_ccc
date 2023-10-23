@@ -168,13 +168,11 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         columns_str = ', '.join(column_names)
         placeholders = ', '.join([f':{col}' for col in column_names])
         
-        query = sqlalchemy.text(f"""
+        connection.execute(
+            sqlalchemy.text(f"""
                 INSERT INTO potion_ledger ({columns_str}) 
                 VALUES ({placeholders})
-                """)
-    
-        parameters = {col: value for col, value in zip(column_names, values)}
-        connection.execute(query, **parameters)
+                """), ({col: value for col, value in zip(column_names, values)}))
 
 
         
