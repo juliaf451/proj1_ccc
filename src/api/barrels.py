@@ -25,8 +25,6 @@ class Barrel(BaseModel):
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
     print(barrels_delivered)
-
-
     
     with db.engine.begin() as connection:
 
@@ -35,6 +33,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         blue_ml = 0
         green_ml = 0
         dark_ml = 0
+        total = 0
 
         # Create transaction for barrels
         # Update ml and gold ledgers corresponding
@@ -43,37 +42,75 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         for barrel in barrels_delivered:
             potion = barrel.potion_type
             quantity = barrel.quantity
+            total += quantity
             cost = cost + barrel.price*quantity
 
             if potion == [1,0,0,0]:
                 red_ml=red_ml+barrel.ml_per_barrel*quantity
-                # sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_red_ml = num_red_ml + :ml")
-                # connection.execute(sql_to_execute, parameters={'ml': barrel.ml_per_barrel*quantity})
             elif potion == [0,1,0,0]:
                 green_ml=green_ml+barrel.ml_per_barrel*quantity
-                # sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_green_ml = num_green_ml + :ml")
-                # connection.execute(sql_to_execute, parameters={'ml': barrel.ml_per_barrel*quantity})
             elif potion == [0,0,1,0]:
                 blue_ml=blue_ml+barrel.ml_per_barrel*quantity
-                # sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET num_blue_ml = num_blue_ml + :ml")
-                # connection.execute(sql_to_execute, parameters={'ml': barrel.ml_per_barrel*quantity})
             elif potion == [0,0,0,1]:
                 dark_ml=dark_ml+barrel.ml_per_barrel*quantity
-            # sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold - :cost")
-            # connection.execute(sql_to_execute, parameters={'cost': cost})
+
+    ml = red_ml + green_ml + blue_ml + dark_ml
 
     with db.engine.begin() as connection:
+
+        # Add the transaction to the ledger
+        transaction_id = connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO transactions (description) 
+                VALUES ('Delivery of :num barrels with :ml ml')
+                RETURNING id
+                """), ({'num':total, 'ml':ml}))
+
+        # Update the gold ledger
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE global_inventory SET
-                num_red_ml = num_red_ml + :red_ml,
-                num_blue_ml = num_blue_ml + :blue_ml,
-                num_green_ml = num_green_ml + :green_ml,
-                num_dark_ml = num_dark_ml + :dark_ml,
-                gold = gold - :cost
-                """),
-            [{'red_ml':red_ml,'green_ml':green_ml,'blue_ml':blue_ml,'dark_ml':dark_ml,'cost':cost}])
+                INSERT INTO gold_ledger (change_gold,transaction_id) 
+                VALUES (:cost,:transaction_id)
+                """), ({'cost':-cost, 'transaction_id':transaction_id}))
+        
+        # Update the barrels ledger
+        connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO barrel_ledger 
+                (transaction_id,change_red,change_green,change_blue,change_dark) 
+                VALUES (:transaction_id,:red,:green,:blue,:dark)
+                """), ({'transaction_id':transaction_id,'red':red_ml,'green':green_ml,'blue':blue_ml,'dark':dark_ml}))
+
+        # Update our inventory by summing the ledger
+        connection.execute(
+                sqlalchemy.text(
+                    """
+                    UPDATE global_inventory
+                    SET num_red_ml = (SELECT SUM(change_red)
+                    FROM barrel_ledger),
+                    num_blue_ml = (SELECT SUM(change_blue)
+                    FROM barrel_ledger),
+                    num_green_ml = (SELECT SUM(change_green)
+                    FROM barrel_ledger),
+                    num_dark_ml = (SELECT SUM(change_dark)
+                    FROM barrel_ledger)
+                    """))
+
+
+        # connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #         UPDATE global_inventory SET
+        #         num_red_ml = num_red_ml + :red_ml,
+        #         num_blue_ml = num_blue_ml + :blue_ml,
+        #         num_green_ml = num_green_ml + :green_ml,
+        #         num_dark_ml = num_dark_ml + :dark_ml,
+        #         gold = gold - :cost
+        #         """),
+        #     [{'red_ml':red_ml,'green_ml':green_ml,'blue_ml':blue_ml,'dark_ml':dark_ml,'cost':cost}])
 
     print(["Purchased: ",red_ml,green_ml,blue_ml,dark_ml,cost])
     return "OK"

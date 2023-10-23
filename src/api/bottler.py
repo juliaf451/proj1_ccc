@@ -17,6 +17,7 @@ router = APIRouter(
 class PotionInventory(BaseModel):
     potion_type: list[int]
     quantity: int
+    change: str
 
 @router.post("/deliver")
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
@@ -26,13 +27,22 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     blue_ml = 0
     green_ml = 0
     dark_ml = 0
+    total = 0
 
     potions = []
     num = []
+    column_names = []
+    values = []
 
     for item in potions_delivered:
         potion_type = item.potion_type
         quantity = item.quantity
+        total += quantity
+
+        # How we know what to add to the ledger
+        column_names.append(item.change)
+        values.append(quantity)
+
         red_ml = red_ml + potion_type[0]*quantity
         green_ml = green_ml + potion_type[1]*quantity
         blue_ml = blue_ml + potion_type[2]*quantity
@@ -41,6 +51,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
         potions.append(potion_type)
         num.append(quantity)
     
+    ml = red_ml+blue_ml+green_ml+dark_ml
 
     with db.engine.begin() as connection:
 
@@ -48,20 +59,66 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
         # Update potions and ml ledgers with the bottler transaction
         # Sum up potions and ml ledgers and update inventories corresponding
 
+         # Add the transaction to the ledger
+        transaction_id = connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO transactions (description) 
+                VALUES ('Bottling :ml ml into :num potions')
+                RETURNING id
+                """), ({'num':total, 'ml':ml}))
+
+        # Update the potions ledger * (isnt this hard coding potions?)
+        column_names.append("transaction_id")
+        values.append(transaction_id)
+        columns_str = ', '.join(column_names)
+        placeholders = ', '.join([f':{col}' for col in column_names])
         
+        query = sqlalchemy.text(f"""
+                INSERT INTO potion_ledger ({columns_str}) 
+                VALUES ({placeholders})
+                """)
+    
+        parameters = {col: value for col, value in zip(column_names, values)}
+        connection.execute(query, **parameters)
+        
+        # Update the barrels ledger
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE global_inventory SET
-                num_red_ml = num_red_ml - :red_ml,
-                num_blue_ml = num_blue_ml - :blue_ml,
-                num_green_ml = num_green_ml - :green_ml,
-                num_dark_ml = num_dark_ml - :dark_ml
-                """),
-            [{'red_ml':red_ml,'green_ml':green_ml,'blue_ml':blue_ml,'dark_ml':dark_ml}])
+                INSERT INTO barrel_ledger 
+                (transaction_id,change_red,change_green,change_blue,change_dark) 
+                VALUES (:transaction_id,:red,:green,:blue,:dark)
+                """), ({'transaction_id':transaction_id,'red':-red_ml,'green':-green_ml,'blue':-blue_ml,'dark':-dark_ml}))
 
-        for i in range(0,len(num)):
-            potions_jsonb = json.dumps(potions[i])
+        # Update our inventory by summing the ledger
+        connection.execute(
+                sqlalchemy.text(
+                    """
+                    UPDATE global_inventory
+                    SET num_red_ml = (SELECT SUM(change_red)
+                    FROM barrel_ledger),
+                    num_blue_ml = (SELECT SUM(change_blue)
+                    FROM barrel_ledger),
+                    num_green_ml = (SELECT SUM(change_green)
+                    FROM barrel_ledger),
+                    num_dark_ml = (SELECT SUM(change_dark)
+                    FROM barrel_ledger)
+                    """))
+
+        # connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #         UPDATE global_inventory SET
+        #         num_red_ml = num_red_ml - :red_ml,
+        #         num_blue_ml = num_blue_ml - :blue_ml,
+        #         num_green_ml = num_green_ml - :green_ml,
+        #         num_dark_ml = num_dark_ml - :dark_ml
+        #         """),
+        #     [{'red_ml':red_ml,'green_ml':green_ml,'blue_ml':blue_ml,'dark_ml':dark_ml}])
+
+        for index, value in enumerate(num):
+            potions_jsonb = json.dumps(potions[index])
             connection.execute(
                 sqlalchemy.text(
                     """
@@ -69,7 +126,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                     SET inventory = catalog.inventory + :num
                     WHERE catalog.potion_type = :potions
                     """),
-                [{'num':num[i],'potions':potions_jsonb}])
+                [{'num':value,'potions':potions_jsonb}])
             
         
 
@@ -92,7 +149,7 @@ def get_bottle_plan():
         num_green_ml = ml_inventory.num_green_ml
         num_dark_ml = ml_inventory.num_dark_ml
 
-        catalog = connection.execute(sqlalchemy.text("SELECT inventory,potion_type FROM catalog")).all()
+        catalog = connection.execute(sqlalchemy.text("SELECT inventory,potion_type,change_string FROM catalog")).all()
         catalog = sorted(catalog, key=lambda item: item[0])
 
 
@@ -116,6 +173,7 @@ def get_bottle_plan():
                     bottle.append({
                         "potion_type": potion_type,
                         "quantity": quantity,
+                        "change":item[2]
                     })
 
         print(bottle)
