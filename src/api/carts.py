@@ -69,13 +69,18 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
-    
-    # Create an account for the customer with their name and cart id
-    # create transaction for their cart
+   
     # update potion and gold ledgers corresponding
     # sum up to revise inventory
 
     with db.engine.begin() as connection:
+
+        customer_name = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT customer_name FROM carts 
+                WHERE :cart_id = carts.id
+                """),({'cart_id':cart_id})).scalar()
 
         connection.execute(
                 sqlalchemy.text(
@@ -97,6 +102,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         
         gold = 0
         potions = 0
+        column_names = []
+        values = []
 
         for item in purchase:
 
@@ -112,10 +119,65 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 """),
                 {'catalog_id': catalog_id}).scalar()
 
+            change = connection.execute(
+                sqlalchemy.text("""
+                SELECT change_string
+                FROM catalog
+                WHERE id = :catalog_id
+                """),
+                {'catalog_id': catalog_id}).scalar()
+            
             # Calculate the cost for this item and add it to the total cost
             item_cost = price * quantity
             gold += item_cost
 
+            column_names.append(change)
+            values.append(-quantity)
+
+
+        # Create an account for the customer with their name and cart id
+        account_id = connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO accounts (holders_name,cart_id) 
+                VALUES (:name,:cart_id)
+                RETURNING id
+                """), ({'name':customer_name, 'cart_id':cart_id})).scalar()
+
+        # Add the transaction to the ledger
+        transaction_id = connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO transactions (description) 
+                VALUES (':customer is buying :num potions for :cost gold')
+                RETURNING id
+                """), ({'customer':customer_name, 'num':potions,'cost':gold})).scalar()
+
+        # Update the gold ledger
+        connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO gold_ledger (change_gold,transaction_id,account_id) 
+                VALUES (:cost,:transaction_id,:account_id)
+                """), ({'cost':gold, 'transaction_id':transaction_id,'account_id':account_id}))
+
+
+        # Update the potions ledger
+        column_names.append(["transaction_id","account_id"])
+        values.append([transaction_id,account_id])
+        columns_str = ', '.join(column_names)
+        placeholders = ', '.join([f':{col}' for col in column_names])
+        
+        query = sqlalchemy.text(f"""
+                INSERT INTO potion_ledger ({columns_str}) 
+                VALUES ({placeholders})
+                """)
+    
+        parameters = {col: value for col, value in zip(column_names, values)}
+        connection.execute(query, **parameters)
+
+
+        
         sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+:money")
         connection.execute(sql_to_execute, parameters={'money': gold})
 
