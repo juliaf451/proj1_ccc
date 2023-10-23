@@ -66,7 +66,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                 INSERT INTO transactions (description) 
                 VALUES ('Bottling :ml ml into :num potions')
                 RETURNING id
-                """), ({'num':total, 'ml':ml}))
+                """), ({'num':total, 'ml':ml})).scalar()
 
         # Update the potions ledger * (isnt this hard coding potions?)
         column_names.append("transaction_id")

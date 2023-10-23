@@ -65,7 +65,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                 INSERT INTO transactions (description) 
                 VALUES ('Delivery of :num barrels with :ml ml')
                 RETURNING id
-                """), ({'num':total, 'ml':ml}))
+                """), ({'num':total, 'ml':ml})).scalar()
 
         # Update the gold ledger
         connection.execute(
