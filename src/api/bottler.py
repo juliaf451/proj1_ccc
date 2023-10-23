@@ -44,6 +44,11 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
 
     with db.engine.begin() as connection:
 
+        # Add the bottle transaction to the transaction table
+        # Update potions and ml ledgers with the bottler transaction
+        # Sum up potions and ml ledgers and update inventories corresponding
+
+        
         connection.execute(
             sqlalchemy.text(
                 """
@@ -65,6 +70,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                     WHERE catalog.potion_type = :potions
                     """),
                 [{'num':num[i],'potions':potions_jsonb}])
+            
+        
 
     return "OK"
 

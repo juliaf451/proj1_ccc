@@ -29,7 +29,7 @@ def get_catalog():
         "potion_type": item[3]}
         )
 
-        if len(statement >= 6):
+        if len(statement) >= 6:
             break
         
     print(statement)

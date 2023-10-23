@@ -36,6 +36,10 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         green_ml = 0
         dark_ml = 0
 
+        # Create transaction for barrels
+        # Update ml and gold ledgers corresponding
+        # Update inventory by summing ledger
+
         for barrel in barrels_delivered:
             potion = barrel.potion_type
             quantity = barrel.quantity
