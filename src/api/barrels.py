@@ -100,18 +100,6 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                     """))
 
 
-        # connection.execute(
-        #     sqlalchemy.text(
-        #         """
-        #         UPDATE global_inventory SET
-        #         num_red_ml = num_red_ml + :red_ml,
-        #         num_blue_ml = num_blue_ml + :blue_ml,
-        #         num_green_ml = num_green_ml + :green_ml,
-        #         num_dark_ml = num_dark_ml + :dark_ml,
-        #         gold = gold - :cost
-        #         """),
-        #     [{'red_ml':red_ml,'green_ml':green_ml,'blue_ml':blue_ml,'dark_ml':dark_ml,'cost':cost}])
-
     print(["Purchased: ",red_ml,green_ml,blue_ml,dark_ml,cost])
     return "OK"
 

@@ -79,6 +79,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 SELECT customer_name FROM carts 
                 WHERE :cart_id = carts.id
                 """),({'cart_id':cart_id})).scalar()
+        
+
 
         connection.execute(
                 sqlalchemy.text(
@@ -121,6 +123,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
 
         # Create an account for the customer with their name and cart id
+
         account_id = connection.execute(
             sqlalchemy.text(
                 """
@@ -134,9 +137,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             sqlalchemy.text(
                 """
                 INSERT INTO transactions (description) 
-                VALUES (':customer is buying :num potions for :cost gold')
+                VALUES ('A customer is buying :num potions for :cost gold')
                 RETURNING id
-                """), ({'customer':customer_name, 'num':potions,'cost':gold})).scalar()
+                """), ({'num':potions,'cost':gold})).scalar()
 
         # Update the potions ledger - one row per potion type
         for item in purchase:
@@ -158,9 +161,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
 
         
-
-
-            # sum up to revise inventory
+        # sum up to revise inventory
+            
             
         sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+:money")
         connection.execute(sql_to_execute, parameters={'money': gold})
