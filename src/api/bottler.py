@@ -17,7 +17,6 @@ router = APIRouter(
 class PotionInventory(BaseModel):
     potion_type: list[int]
     quantity: int
-    pot_id: int
 
 @router.post("/deliver")
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
@@ -40,8 +39,6 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
         total += quantity
 
         # How we know what to add to the ledger
-        potion_ids.append(item.pot_id)
-        values.append(quantity)
 
         red_ml = red_ml + potion_type[0]*quantity
         green_ml = green_ml + potion_type[1]*quantity
@@ -70,13 +67,21 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
 
         # Update the potions ledger - one row per potion type
         for item in potions_delivered:
+            potions_jsonb = json.dumps(item.potion_type)
+            pot_id = connection.execute(
+                sqlalchemy.text(
+                    """
+                    SELECT id
+                    FROM catalog
+                    WHERE :type = catalog.potion_type
+                    """), ({'type':potions_jsonb})).scalar()
+            
             connection.execute(
                 sqlalchemy.text(
                     """
                     INSERT INTO potion_ledger (transaction_id,potion_id,quantity_change) 
-                    VALUES (:transaction_id, :potion_id,:quantity)
-                    RETURNING id
-                    """), ({'transaction_id':transaction_id, 'potion_id':item.pot_id,'quantity':item.quantity}))
+                    VALUES (:transaction_id, :id,:quantity)
+                    """), ({'transaction_id':transaction_id, 'id':pot_id,'quantity':item.quantity}))
         
         # Update the barrels ledger
         connection.execute(
@@ -168,11 +173,10 @@ def get_bottle_plan():
                 num_green_ml = num_green_ml-potion_type[1]*quantity
                 num_blue_ml = num_blue_ml-potion_type[2]*quantity
                 num_dark_ml = num_dark_ml-potion_type[3]*quantity
-
+                
                 bottle.append({
                     "potion_type": potion_type,
-                    "quantity": quantity,
-                    "pot_id":item[2]
+                    "quantity": quantity
                 })
 
         print(bottle)
