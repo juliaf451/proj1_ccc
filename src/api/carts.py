@@ -137,9 +137,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             sqlalchemy.text(
                 """
                 INSERT INTO transactions (description) 
-                VALUES ('A customer is buying :num potions for :cost gold')
+                VALUES (:customer || ' is buying :num potions for :cost gold')
                 RETURNING id
-                """), ({'num':potions,'cost':gold})).scalar()
+                """), ({'customer':customer_name,'num':potions,'cost':gold})).scalar()
 
         # Update the potions ledger - one row per potion type
         for item in purchase:
