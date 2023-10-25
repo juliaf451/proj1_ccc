@@ -48,7 +48,7 @@ def reset():
         connection.execute(
             sqlalchemy.text(
                 """
-                INSERT INTO gold_ledger (change_gold,transaction_id,account_id) 
+                INSERT INTO gold_ledger (change_gold,transaction_id) 
                 VALUES (100,:transaction_id)
                 """), ({'transaction_id':transaction_id}))
 

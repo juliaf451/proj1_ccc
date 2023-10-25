@@ -148,7 +148,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     """
                     INSERT INTO potion_ledger (transaction_id,account_id,potion_id,quantity_change) 
                     VALUES (:transaction_id, :account,:potion_id,:quantity)
-                    RETURNING id
                     """), ({'transaction_id':transaction_id, 'account':account_id,'potion_id':item.catalog_id,'quantity':-item.quantity}))
 
         # Update the gold ledger
