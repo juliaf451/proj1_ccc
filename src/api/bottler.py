@@ -30,8 +30,6 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
 
     potions = []
     num = []
-    potion_ids = []
-    values = []
 
     for item in potions_delivered:
         potion_type = item.potion_type
@@ -93,19 +91,19 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                 """), ({'transaction_id':transaction_id,'red':-red_ml,'green':-green_ml,'blue':-blue_ml,'dark':-dark_ml}))
 
         # Update our inventory by summing the ledger
-        connection.execute(
-                sqlalchemy.text(
-                    """
-                    UPDATE global_inventory
-                    SET num_red_ml = (SELECT SUM(change_red)
-                    FROM barrel_ledger),
-                    num_blue_ml = (SELECT SUM(change_blue)
-                    FROM barrel_ledger),
-                    num_green_ml = (SELECT SUM(change_green)
-                    FROM barrel_ledger),
-                    num_dark_ml = (SELECT SUM(change_dark)
-                    FROM barrel_ledger)
-                    """))
+        # connection.execute(
+        #         sqlalchemy.text(
+        #             """
+        #             UPDATE global_inventory
+        #             SET num_red_ml = (SELECT SUM(change_red)
+        #             FROM barrel_ledger),
+        #             num_blue_ml = (SELECT SUM(change_blue)
+        #             FROM barrel_ledger),
+        #             num_green_ml = (SELECT SUM(change_green)
+        #             FROM barrel_ledger),
+        #             num_dark_ml = (SELECT SUM(change_dark)
+        #             FROM barrel_ledger)
+        #             """))
 
 
         for index, value in enumerate(num):
@@ -134,11 +132,14 @@ def get_bottle_plan():
 
     with db.engine.begin() as connection:
         
-        ml_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory")).first()
-        num_red_ml = ml_inventory.num_red_ml
-        num_blue_ml = ml_inventory.num_blue_ml
-        num_green_ml = ml_inventory.num_green_ml
-        num_dark_ml = ml_inventory.num_dark_ml
+        inventory = connection.execute(sqlalchemy.text("""
+                SELECT SUM(change_red) AS red,SUM(change_green) AS green,SUM(change_blue) AS blue,SUM(change_dark) AS dark
+                FROM barrel_ledger""")).all()
+        
+        num_red_ml = inventory[0].red
+        num_blue_ml = inventory[0].blue
+        num_green_ml = inventory[0].green
+        num_dark_ml = inventory[0].dark
 
         catalog = connection.execute(sqlalchemy.text("SELECT inventory,potion_type,id FROM catalog")).all()
         catalog = sorted(catalog, key=lambda item: item[0])

@@ -163,8 +163,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         # sum up to revise inventory
             
             
-        sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+:money")
-        connection.execute(sql_to_execute, parameters={'money': gold})
+        #sql_to_execute = sqlalchemy.text("UPDATE global_inventory SET gold = gold+:money")
+        #connection.execute(sql_to_execute, parameters={'money': gold})
 
        
 

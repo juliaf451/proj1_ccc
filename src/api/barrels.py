@@ -84,20 +84,20 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                 VALUES (:transaction_id,:red,:green,:blue,:dark)
                 """), ({'transaction_id':transaction_id,'red':red_ml,'green':green_ml,'blue':blue_ml,'dark':dark_ml}))
 
-        # Update our inventory by summing the ledger
-        connection.execute(
-                sqlalchemy.text(
-                    """
-                    UPDATE global_inventory
-                    SET num_red_ml = (SELECT SUM(change_red)
-                    FROM barrel_ledger),
-                    num_blue_ml = (SELECT SUM(change_blue)
-                    FROM barrel_ledger),
-                    num_green_ml = (SELECT SUM(change_green)
-                    FROM barrel_ledger),
-                    num_dark_ml = (SELECT SUM(change_dark)
-                    FROM barrel_ledger)
-                    """))
+        # # Update our inventory by summing the ledger
+        # connection.execute(
+        #         sqlalchemy.text(
+        #             """
+        #             UPDATE global_inventory
+        #             SET num_red_ml = (SELECT SUM(change_red)
+        #             FROM barrel_ledger),
+        #             num_blue_ml = (SELECT SUM(change_blue)
+        #             FROM barrel_ledger),
+        #             num_green_ml = (SELECT SUM(change_green)
+        #             FROM barrel_ledger),
+        #             num_dark_ml = (SELECT SUM(change_dark)
+        #             FROM barrel_ledger)
+        #             """))
 
 
     print(["Purchased: ",red_ml,green_ml,blue_ml,dark_ml,cost])
@@ -113,12 +113,15 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
 
     with db.engine.begin() as connection:
-        inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory")).first()
-        num_red_ml = inventory.num_red_ml
-        num_blue_ml = inventory.num_blue_ml
-        num_green_ml = inventory.num_green_ml
-        num_dark_ml = inventory.num_dark_ml
-        gold = inventory.gold
+        inventory = connection.execute(sqlalchemy.text("""
+                SELECT SUM(change_red) AS red,SUM(change_green) AS green,SUM(change_blue) AS blue,SUM(change_dark) AS dark
+                FROM barrel_ledger""")).all()
+        
+        num_red_ml = inventory[0].red
+        num_blue_ml = inventory[0].blue
+        num_green_ml = inventory[0].green
+        num_dark_ml = inventory[0].dark
+        gold = sum(connection.execute(sqlalchemy.text("SELECT change_gold FROM gold_ledger")).scalars().all())
 
         purchase = []
         # what other types of barrels are there? should we query by potion_type instead?
