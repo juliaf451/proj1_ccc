@@ -19,6 +19,7 @@ def get_inventory():
         ml = sum(connection.execute(sqlalchemy.text("""
             SELECT change_red,change_green,change_blue,change_dark 
             FROM barrel_ledger""")).scalars().all())
+        
         potions = sum(connection.execute(sqlalchemy.text("SELECT quantity_change FROM potion_ledger")).scalars().all())
 
     print({"number_of_potions": potions, "ml_in_barrels": ml, "gold": gold})
