@@ -91,23 +91,20 @@ def search_orders(
 
 
         #result = connection.execute(stmt)
-        json = []
+        results = []
 
         for row in result:
-            json.append({
-                "previous": "",
-                "next": "",
-                "results": [
-                {
+            results.append({
                     "line_item_id": row.item_id,
                     "item_sku": f"{row.quantity} {row.sku} POTION",
                     "customer_name": row.name,
                     "line_item_total": row.quantity*row.price,
                     "timestamp": row.time,
-                }
-                ]})
-
+                })
     
+    json = {"previous": "", "next": "","results": results}
+
+
 
     """
     Search for cart line items by customer name and/or potion sku.
