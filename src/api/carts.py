@@ -65,7 +65,23 @@ def search_orders(
                 ORDER BY carts.customer_name
                 LIMIT :limit OFFSET :offset
                 """
-            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':offset})
+            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':0})
+            ).all()
+        
+        next = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT carts.id AS cart_id, carts.customer_name AS name, carts.created_at AS time, 
+                    cart_items.catalog_id AS item_id, cart_items.quantity AS quantity,
+                    catalog.sku AS sku, catalog.price AS price
+                FROM carts
+                JOIN cart_items ON cart_items.cart_id = carts.id
+                JOIN catalog ON catalog.id = cart_items.catalog_id
+                WHERE carts.customer_name ILIKE :name
+                ORDER BY carts.customer_name
+                LIMIT :limit OFFSET :offset
+                """
+            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':5})
             ).all()
 
 
@@ -91,6 +107,7 @@ def search_orders(
 
 
         #result = connection.execute(stmt)
+
         results = []
 
         for row in result:
@@ -102,9 +119,9 @@ def search_orders(
                     "timestamp": row.time,
                 })
     
-    json = {"previous": "", "next": "","results": results}
+    json = {"previous": "", "next": next,"results": results}
 
-
+    return json
 
     """
     Search for cart line items by customer name and/or potion sku.
@@ -131,7 +148,7 @@ def search_orders(
     time is 5 total line items.
     """
 
-    return json
+   
 
 
 

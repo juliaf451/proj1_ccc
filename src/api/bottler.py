@@ -145,42 +145,41 @@ def get_bottle_plan():
         catalog = sorted(catalog, key=lambda item: item[0])
 
     
-        bottle = []
-        
+    bottle = []
+    
 
-        for item in catalog:
-            quantity = 0
-            potion_type = item[1]
-            if num_red_ml >= potion_type[0] and num_green_ml >= potion_type[1] and \
-                num_blue_ml >= potion_type[2] and num_dark_ml >= potion_type[3]:
+    for item in catalog:
+        quantity = 0
+        potion_type = item[1]
+        if num_red_ml >= potion_type[0] and num_green_ml >= potion_type[1] and \
+            num_blue_ml >= potion_type[2] and num_dark_ml >= potion_type[3]:
 
-                red = 1000
-                green = 1000
-                blue = 1000
-                dark = 1000
+            red = 1000
+            green = 1000
+            blue = 1000
+            dark = 1000
 
-                if potion_type[0] > 0:
-                    red = int(num_red_ml/potion_type[0])
-                if potion_type[1] > 0:
-                    green = int(num_green_ml/potion_type[1])
-                if potion_type[2] > 0:
-                    blue = int(num_blue_ml/potion_type[2])
-                if potion_type[3] > 0:
-                    dark = int(num_dark_ml/potion_type[3])
-                
-                quantity = min([red,green,blue,dark])
-                
-                num_red_ml = num_red_ml-potion_type[0]*quantity
-                num_green_ml = num_green_ml-potion_type[1]*quantity
-                num_blue_ml = num_blue_ml-potion_type[2]*quantity
-                num_dark_ml = num_dark_ml-potion_type[3]*quantity
-                
-                bottle.append({
-                    "potion_type": potion_type,
-                    "quantity": quantity
-                })
+            if potion_type[0] > 0:
+                red = int(num_red_ml/potion_type[0])
+            if potion_type[1] > 0:
+                green = int(num_green_ml/potion_type[1])
+            if potion_type[2] > 0:
+                blue = int(num_blue_ml/potion_type[2])
+            if potion_type[3] > 0:
+                dark = int(num_dark_ml/potion_type[3])
+            
+            quantity = min([red,green,blue,dark])
+            
+            num_red_ml = num_red_ml-potion_type[0]*quantity
+            num_green_ml = num_green_ml-potion_type[1]*quantity
+            num_blue_ml = num_blue_ml-potion_type[2]*quantity
+            num_dark_ml = num_dark_ml-potion_type[3]*quantity
+            
+            bottle.append({
+                "potion_type": potion_type,
+                "quantity": quantity
+            })
 
-        print(bottle)
+    print(bottle)
 
-        return bottle
- 
+    return bottle
