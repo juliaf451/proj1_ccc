@@ -12,7 +12,7 @@ Cal Poly Concoctions is the premier ecommerce site for all your alchemical desir
 """
 
 app = FastAPI(
-    title="Central Coast Cauldrons",
+    title="Cal Poly Concoctions",
     description=description,
     version="0.0.1",
     terms_of_service="http://example.com/terms/",

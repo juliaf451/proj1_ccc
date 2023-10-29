@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import sqlalchemy
 from src import database as db
 from src.api import auth
+from enum import Enum
 
 
 
@@ -32,6 +33,82 @@ def search_orders(
     sort_col: search_sort_options = search_sort_options.timestamp,
     sort_order: search_sort_order = search_sort_order.desc,
 ):
+    
+    limit = 5
+    offset = 0
+    order_by="catalog.id"
+
+    # if sort_col is search_sort_options.customer_name:
+    #     order_by = db.carts.customer_name
+    # elif sort_col is search_sort_options.item_sku:
+    #     order_by = db.catalog.sku
+    # elif sort_col is search_sort_options.timestamp:
+    #     order_by = sqlalchemy.desc(db.cart_items.timestamp)
+    # else:
+    #     assert False
+
+    
+
+
+    with db.engine.connect() as connection:
+
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT carts.id AS cart_id, carts.customer_name AS name, carts.created_at AS time, 
+                    cart_items.catalog_id AS item_id, cart_items.quantity AS quantity,
+                    catalog.sku AS sku, catalog.price AS price
+                FROM carts
+                JOIN cart_items ON cart_items.cart_id = carts.id
+                JOIN catalog ON catalog.id = cart_items.catalog_id
+                WHERE carts.customer_name ILIKE :name
+                ORDER BY carts.customer_name
+                LIMIT :limit OFFSET :offset
+                """
+            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':offset})
+            ).all()
+
+
+        # stmt = (
+        #     sqlalchemy.select(
+        #         db.carts.cart_id,
+        #         db.carts.customer_name,
+        #         db.carts.timestamp,
+        #         db.cart_items.catalog_id,
+        #         db.cart_items.quantity,
+        #         db.catalog.item_sku,
+        #         db.catalog.price,
+        #     )
+        #     .limit(limit)
+        #     .offset(offset)
+        #     .order_by(order_by, db.timestamp)
+        #     )
+
+    
+        # # filter only if name parameter is passed
+        # if customer_name != "":
+        #     stmt = stmt.where(db.carts.customer_name.ilike(f"%{customer_name}%"))
+
+
+        #result = connection.execute(stmt)
+        json = []
+
+        for row in result:
+            json.append({
+                "previous": "",
+                "next": "",
+                "results": [
+                {
+                    "line_item_id": row.item_id,
+                    "item_sku": f"{row.quantity} {row.sku} POTION",
+                    "customer_name": row.name,
+                    "line_item_total": row.quantity*row.price,
+                    "timestamp": row.time,
+                }
+                ]})
+
+    
+
     """
     Search for cart line items by customer name and/or potion sku.
 
@@ -57,19 +134,8 @@ def search_orders(
     time is 5 total line items.
     """
 
-    return {
-        "previous": "",
-        "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
-            }
-        ],
-    }
+    return json
+
 
 
 class NewCart(BaseModel):
