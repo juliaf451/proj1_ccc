@@ -8,6 +8,7 @@ from enum import Enum
 
 
 
+
 router = APIRouter(
     prefix="/carts",
     tags=["cart"],
@@ -25,7 +26,9 @@ class search_sort_order(str, Enum):
     asc = "asc"
     desc = "desc"   
 
+line_id = 0
 @router.get("/search/", tags=["search"])
+
 def search_orders(
     customer_name: str = "",
     potion_sku: str = "",
@@ -67,22 +70,6 @@ def search_orders(
                 """
             ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':0})
             ).all()
-        
-        next = connection.execute(
-            sqlalchemy.text(
-                """
-                SELECT carts.id AS cart_id, carts.customer_name AS name, carts.created_at AS time, 
-                    cart_items.catalog_id AS item_id, cart_items.quantity AS quantity,
-                    catalog.sku AS sku, catalog.price AS price
-                FROM carts
-                JOIN cart_items ON cart_items.cart_id = carts.id
-                JOIN catalog ON catalog.id = cart_items.catalog_id
-                WHERE carts.customer_name ILIKE :name
-                ORDER BY carts.customer_name
-                LIMIT :limit OFFSET :offset
-                """
-            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':5})
-            ).all()
 
 
         # stmt = (
@@ -109,27 +96,18 @@ def search_orders(
         #result = connection.execute(stmt)
 
         results = []
-        next_res = []
-
+        global line_id
         for row in result:
+            line_id += 1
             results.append({
-                    "line_item_id": row.item_id,
+                    "line_item_id": line_id,
                     "item_sku": f"{row.quantity} {row.sku} POTION",
                     "customer_name": row.name,
                     "line_item_total": row.quantity*row.price,
                     "timestamp": row.time,
-                })
-            
-        for row in next:
-            next_res.append({
-                    "line_item_id": row.item_id,
-                    "item_sku": f"{row.quantity} {row.sku} POTION",
-                    "customer_name": row.name,
-                    "line_item_total": row.quantity*row.price,
-                    "timestamp": row.time,
-                })
+                }) 
     
-    json = {"previous": "", "next": next_res,"results": results}
+    json = {"previous": "", "next": "","results": results}
 
     return json
 
