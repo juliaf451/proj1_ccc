@@ -109,6 +109,7 @@ def search_orders(
         #result = connection.execute(stmt)
 
         results = []
+        next_res = []
 
         for row in result:
             results.append({
@@ -118,8 +119,17 @@ def search_orders(
                     "line_item_total": row.quantity*row.price,
                     "timestamp": row.time,
                 })
+            
+        for row in next:
+            next_res.append({
+                    "line_item_id": row.item_id,
+                    "item_sku": f"{row.quantity} {row.sku} POTION",
+                    "customer_name": row.name,
+                    "line_item_total": row.quantity*row.price,
+                    "timestamp": row.time,
+                })
     
-    json = {"previous": "", "next": next,"results": results}
+    json = {"previous": "", "next": next_res,"results": results}
 
     return json
 
