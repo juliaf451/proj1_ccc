@@ -38,7 +38,10 @@ def search_orders(
 ):
     
     limit = 5
-    offset = int(search_page)
+    if search_page == "":
+        offset = 0
+    else:
+        offset = int(search_page)
 
     
 
@@ -78,10 +81,6 @@ def search_orders(
             ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':offset,'sku':f"%{potion_sku}%"})).all()
 
 
-
-
-
-
         results = []
         global line_id
         for row in result:
@@ -98,6 +97,8 @@ def search_orders(
         prev = ""
     else:
         prev = str(offset - 5)
+    
+    
     next = str(offset + 5)
 
     json = {"previous": prev, "next": next,"results": results}
