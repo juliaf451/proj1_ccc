@@ -38,7 +38,7 @@ def search_orders(
 ):
     
     limit = 5
-    offset = 0
+    offset = int(search_page)
     order_by="catalog.id"
 
     # if sort_col is search_sort_options.customer_name:
@@ -69,32 +69,9 @@ def search_orders(
                 ORDER BY carts.customer_name
                 LIMIT :limit OFFSET :offset
                 """
-            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':offset,'sku':potion_sku})
+            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':offset,'sku':f"%{potion_sku}%"})
             ).all()
 
-
-        # stmt = (
-        #     sqlalchemy.select(
-        #         db.carts.cart_id,
-        #         db.carts.customer_name,
-        #         db.carts.timestamp,
-        #         db.cart_items.catalog_id,
-        #         db.cart_items.quantity,
-        #         db.catalog.item_sku,
-        #         db.catalog.price,
-        #     )
-        #     .limit(limit)
-        #     .offset(offset)
-        #     .order_by(order_by, db.timestamp)
-        #     )
-
-    
-        # # filter only if name parameter is passed
-        # if customer_name != "":
-        #     stmt = stmt.where(db.carts.customer_name.ilike(f"%{customer_name}%"))
-
-
-        #result = connection.execute(stmt)
 
         results = []
         global line_id
@@ -108,7 +85,13 @@ def search_orders(
                     "timestamp": row.time,
                 }) 
     
-    json = {"previous": "0", "next": "5","results": results}
+    if offset == 0:
+        prev = ""
+    else:
+        prev = str(offset - 5)
+    next = str(offset + 5)
+    
+    json = {"previous": prev, "next": next,"results": results}
 
     return json
 
