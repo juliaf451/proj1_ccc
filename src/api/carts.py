@@ -95,7 +95,7 @@ def search_orders(
     else:
         prev = str(offset - 5)
     
-    if results == []:
+    if results == [] or len(results) < 5:
         next = ""
     else:
         next = str(offset + 5)
