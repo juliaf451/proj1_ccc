@@ -65,10 +65,11 @@ def search_orders(
                 JOIN cart_items ON cart_items.cart_id = carts.id
                 JOIN catalog ON catalog.id = cart_items.catalog_id
                 WHERE carts.customer_name ILIKE :name
+                AND catalog.sku ILIKE :sku
                 ORDER BY carts.customer_name
                 LIMIT :limit OFFSET :offset
                 """
-            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':0})
+            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':offset,'sku':potion_sku})
             ).all()
 
 
@@ -107,7 +108,7 @@ def search_orders(
                     "timestamp": row.time,
                 }) 
     
-    json = {"previous": "", "next": "","results": results}
+    json = {"previous": "0", "next": "5","results": results}
 
     return json
 
