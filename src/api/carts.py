@@ -39,25 +39,31 @@ def search_orders(
     
     limit = 5
     offset = int(search_page)
-    order_by="catalog.id"
-
-    # if sort_col is search_sort_options.customer_name:
-    #     order_by = db.carts.customer_name
-    # elif sort_col is search_sort_options.item_sku:
-    #     order_by = db.catalog.sku
-    # elif sort_col is search_sort_options.timestamp:
-    #     order_by = sqlalchemy.desc(db.cart_items.timestamp)
-    # else:
-    #     assert False
 
     
 
 
     with db.engine.connect() as connection:
 
+        if sort_order is search_sort_order.desc:
+            order = "DESC"
+        else:
+            order = "ASC"
+
+        if sort_col is search_sort_options.customer_name:
+            order_by = "carts.customer_name"
+        elif sort_col is search_sort_options.item_sku:
+            order_by = "catalog.sku"
+        elif sort_col is search_sort_options.timestamp:
+            order_by = "carts.created_at"
+        elif sort_col is search_sort_options.line_item_total:
+            order_by = "catalog.price * cart_items.quantity"
+        else:
+            assert False
+
         result = connection.execute(
             sqlalchemy.text(
-                """
+                f"""
                 SELECT carts.id AS cart_id, carts.customer_name AS name, carts.created_at AS time, 
                     cart_items.catalog_id AS item_id, cart_items.quantity AS quantity,
                     catalog.sku AS sku, catalog.price AS price
@@ -66,11 +72,14 @@ def search_orders(
                 JOIN catalog ON catalog.id = cart_items.catalog_id
                 WHERE carts.customer_name ILIKE :name
                 AND catalog.sku ILIKE :sku
-                ORDER BY carts.customer_name
+                ORDER BY {order_by} {order}
                 LIMIT :limit OFFSET :offset
                 """
-            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':offset,'sku':f"%{potion_sku}%"})
-            ).all()
+            ),({'name':f"%{customer_name}%", 'limit':limit, 'offset':offset,'sku':f"%{potion_sku}%"})).all()
+
+
+
+
 
 
         results = []
@@ -90,7 +99,7 @@ def search_orders(
     else:
         prev = str(offset - 5)
     next = str(offset + 5)
-    
+
     json = {"previous": prev, "next": next,"results": results}
 
     return json
