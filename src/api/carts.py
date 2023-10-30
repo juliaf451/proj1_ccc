@@ -43,9 +43,6 @@ def search_orders(
     else:
         offset = int(search_page)
 
-    
-
-
     with db.engine.connect() as connection:
 
         if sort_order is search_sort_order.desc:
@@ -98,8 +95,10 @@ def search_orders(
     else:
         prev = str(offset - 5)
     
-    
-    next = str(offset + 5)
+    if results == []:
+        next = ""
+    else:
+        next = str(offset + 5)
 
     json = {"previous": prev, "next": next,"results": results}
 
