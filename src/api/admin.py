@@ -51,6 +51,14 @@ def reset():
                 INSERT INTO gold_ledger (change_gold,transaction_id) 
                 VALUES (100,:transaction_id)
                 """), ({'transaction_id':transaction_id}))
+        
+        # Add empty ml row
+        connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO barrel_ledger 
+                DEFAULT VALUES
+                """))
 
 
     return "OK"

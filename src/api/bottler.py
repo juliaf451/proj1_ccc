@@ -146,14 +146,6 @@ def get_bottle_plan():
 
     
     bottle = []
-    if num_red_ml is None:
-        num_red_ml = 0
-    if num_green_ml is None:
-        num_green_ml = 0
-    if num_blue_ml is None:
-        num_blue_ml = 0
-    if num_dark_ml is None:
-        num_dark_ml = 0
 
     
 
