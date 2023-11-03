@@ -16,12 +16,13 @@ def get_inventory():
     """ """
     with db.engine.begin() as connection:
         gold = sum(connection.execute(sqlalchemy.text("SELECT change_gold FROM gold_ledger")).scalars().all())
-        ml = sum(connection.execute(sqlalchemy.text("""
-            SELECT change_red,change_green,change_blue,change_dark 
-            FROM barrel_ledger""")).scalars().all())
+        ml = connection.execute(sqlalchemy.text("""
+            SELECT SUM(change_red) AS red,SUM(change_green) AS green,
+                    SUM(change_blue) AS blue,SUM(change_dark) AS dark
+            FROM barrel_ledger""")).all()
         
         potions = sum(connection.execute(sqlalchemy.text("SELECT quantity_change FROM potion_ledger")).scalars().all())
-
+    ml = ml[0].red + ml[0].green + ml[0].blue + ml[0].dark
     print({"number_of_potions": potions, "ml_in_barrels": ml, "gold": gold})
     return {"number_of_potions": potions, "ml_in_barrels": ml, "gold": gold}
 
