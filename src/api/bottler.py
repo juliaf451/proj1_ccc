@@ -153,7 +153,7 @@ def get_bottle_plan():
         quantity = 0
         potion_type = item[1]
         if num_red_ml >= potion_type[0] and num_green_ml >= potion_type[1] and \
-            num_blue_ml >= potion_type[2] and num_dark_ml >= potion_type[3]:
+            num_blue_ml >= potion_type[2] and num_dark_ml >= potion_type[3] and item[2] != 6:
 
             red = 1000
             green = 1000
