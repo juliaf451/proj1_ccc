@@ -148,8 +148,9 @@ def get_bottle_plan():
     bottle = []
 
     
-
+    total = 0
     for item in catalog:
+        total += item[0]
         quantity = 0
         potion_type = item[1]
         if num_red_ml >= potion_type[0] and num_green_ml >= potion_type[1] and \
@@ -180,7 +181,10 @@ def get_bottle_plan():
                 "potion_type": potion_type,
                 "quantity": quantity
             })
+            total += quantity
 
     print(bottle)
-
+    if total > 300:
+        return []
+    
     return bottle
